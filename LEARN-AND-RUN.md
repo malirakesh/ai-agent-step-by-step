@@ -12,6 +12,11 @@ We'll cover two things:
 
 ---
 
+![image alt](
+https://github.com/malirakesh/ai-agent-step-by-step/blob/15a1751381127d6d6148d57d6a6d1b13dfae9338/assets/anatomy-of-a-single-prompt.png)
+
+[Read my articles on Medium](https://medium.com/@rakesh.mali/zero-to-claude-what-fifteen-lines-taught-me-about-ai-agents-ba33c21fb295)
+
 ## 1. The big picture
 
 At its core, an "AI agent" script does three things:
