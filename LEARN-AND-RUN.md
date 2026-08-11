@@ -276,12 +276,15 @@ Once the script runs successfully, try modifying it yourself to deepen your unde
        messages=[{"role": "user", "content": "What is the capital of France?"}]
    )
    ```
-4. **Make it a multi-turn conversation** by appending the assistant's reply and a new user
-   message to the `messages` list, then sending the whole list again.
-5. **Turn it into a loop** using `input()` so you can type questions interactively instead of
-   hardcoding one.
-6. **Inspect `message.usage`** to see how many tokens your input and output cost — this is the
+4. **Inspect `message.usage`** to see how many tokens your input and output cost — this is the
    first step toward understanding API pricing.
+
+## 6. COMING UP NEXT
+1. **Deep-Dive into `max_tokens` and play with it** this is very basic yet important to understand for a fine grained control on the response generation. We will explore this under branch `level-02`
+2. **Make it a multi-turn conversation** by appending the assistant's reply and a new user
+   message to the `messages` list, then sending the whole list again. We will explore this under branch `level-03`
+3. **Turn it into a loop** using `input()` so you can type questions interactively instead of
+   hardcoding one. We will explore this under branch `level-04`
 
 Each of these steps builds naturally toward the next stage of "agent" behavior: conversation
 memory, tool use, and eventually autonomous multi-step agents.
