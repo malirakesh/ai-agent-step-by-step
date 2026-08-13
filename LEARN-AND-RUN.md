@@ -1,5 +1,3 @@
-# ai-agent-step-by-step
-
 # Learn & Run: Your First AI Agent Script
 
 This guide is written for someone who has **never built an AI agent before** and wants to
