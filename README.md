@@ -1,16 +1,14 @@
 # ai-agent-step-by-step
 
-# Learn & Run: Your First AI Agent Script
+# 🪜 Learn & Run: Building an AI Agent, One Level at a Time
 
-This guide is written for someone who has **never built an AI agent before** and wants to
-understand exactly what [scripts/agent.py](scripts/agent.py) does, line by line, and how to
-run it themselves.
+This repo is written for someone who has **never built an AI agent before**. Instead of
+dropping you into a complex framework, it grows a single idea — "send text to Claude, get
+text back" — one small, deliberate step at a time, until it turns into a real multi-turn
+conversational agent.
 
-We'll cover two things:
-
-1. **How the script works** — a line-by-line walkthrough.
-2. **How to run it** — a step-by-step setup guide, from zero to a working response from
-   Claude.
+Every level lives in its own folder with its own script and its own README. Read them in
+order — each one only makes sense because of what the previous one taught you.
 
 ---
 
@@ -18,6 +16,23 @@ We'll cover two things:
 https://github.com/malirakesh/ai-agent-step-by-step/blob/15a1751381127d6d6148d57d6a6d1b13dfae9338/assets/anatomy-of-a-single-prompt.png)
 
 [Read my articles on Medium](https://medium.com/@rakesh.mali/zero-to-claude-what-fifteen-lines-taught-me-about-ai-agents-ba33c21fb295)
+
+---
+
+## 🗺️ What you'll learn, level by level
+
+| Level | Title | What you'll learn |
+|---|---|---|
+| [01](level-01_build_a_basic_agent/LEARN-AND-RUN.md) | Build a Basic Agent | Send your very first prompt to Claude and print the raw response. Sets up your `.env`, API key, and the three-step mental model every agent is built on: *send → think → receive*. |
+| [02](level-02_anatomy_of_claude_response/API_RESPONSE_ANATOMY.md) | Anatomy of a Claude Response | Stop treating the response as a black box. Learn every field on the `Message` object — `content`, `stop_reason`, `usage`, token counts — so you know exactly what you're working with. |
+| [03](level-03_claude_llm_model_api_is_stateless/LEVEL-03-README.md) | The Claude API Is Stateless | Discover the single most surprising thing about LLM APIs: Claude forgets everything between calls. See the "amnesia" bug happen live, then fix it by manually resending the conversation so far. |
+| [04](level-04_making_conversation_stateful/LEVEL-04-README.md) | Making the Conversation Stateful | Turn the Level 03 fix into a reusable pattern — a growing `messages` list plus small helper functions (`add_user_message`, `add_claude_assistant_message`, `chat`) that make multi-turn chat feel automatic. |
+
+Each level's README includes a full code walkthrough, sample output, common mistakes to
+avoid, and hands-on exercises ("try this next") to deepen your understanding before moving
+on.
+
+---
 
 ## 1. The big picture
 
@@ -27,163 +42,15 @@ At its core, an "AI agent" script does three things:
 2. Let the model think and generate a reply.
 3. Receive and use that reply.
 
-[scripts/agent.py](scripts/agent.py) is the smallest possible version of that: it sends one
-question ("What is the capital of France?") to Anthropic's Claude model and prints the raw
-answer. There's no loop, no memory, no tools yet — just one request and one response. This is
-the foundation every more advanced agent (multi-turn chat, tool use, autonomous agents) is
-built on top of.
+Every level in this repo starts from that three-step loop and adds exactly one new idea on
+top of it — reading the raw response, handling the API's statelessness, then making a real
+conversation out of it. No level jumps ahead of what the previous one taught.
 
 ---
 
-## 2. Line-by-line walkthrough of `agent.py`
+## 2. Prerequisites & one-time setup
 
-Here is the full file for reference:
-
-```python
-# load environment variables from .env file
-from dotenv import load_dotenv
-load_dotenv()
-
-# load the anthropic library
-from anthropic import Anthropic
-
-client = Anthropic()
-model = "claude-haiku-4-5-20251001"
-
-message = client.messages.create(
-    model=model,
-    max_tokens=1024,
-    messages=[
-        {
-            "role": "user",
-            "content": "What is the capital of France?"
-        }
-    ]
-)
-print(message)
-```
-
-Now let's break down **every line**.
-
-### `from dotenv import load_dotenv`
-
-This imports a function called `load_dotenv` from the `python-dotenv` package.
-
-- **Why it's needed:** Your Claude API key is a secret. You should never type it directly into
-  your Python code (if you did, and pushed the code to GitHub, anyone could steal your key and
-  run up your bill). Instead, secrets are kept in a separate file called `.env` that sits in
-  your project folder and is *never* committed to version control.
-- `load_dotenv` is the function that knows how to read that `.env` file.
-
-### `load_dotenv()`
-
-This actually **calls** the function you just imported.
-
-- It looks for a file named `.env` in your project (or a parent folder) and reads every line
-  formatted like `KEY=VALUE`.
-- For every line it finds, it sets that value as an **environment variable** — basically a
-  piece of data that's available to your running program, similar to how your operating system
-  has variables like `PATH`.
-- In this project, `.env` contains a single line: `ANTHROPIC_API_KEY=<your secret key>`. After
-  this line runs, that key is now accessible to any code in the program, including libraries
-  you didn't write yourself.
-
-### `from anthropic import Anthropic`
-
-This imports the `Anthropic` class from the `anthropic` Python package (the official SDK
-Anthropic publishes for talking to Claude models over their API).
-
-- Think of this class as a "phone" you'll use to call Claude. You need to construct one before
-  you can make any requests.
-
-### `client = Anthropic()`
-
-This creates an instance of that `Anthropic` "phone" and stores it in a variable called
-`client`.
-
-- Notice you didn't type your API key anywhere here. That's intentional: the `Anthropic()`
-  constructor automatically looks for an environment variable named `ANTHROPIC_API_KEY` (the
-  same one `load_dotenv()` loaded a moment ago) and uses it to authenticate every request this
-  client makes.
-- This is exactly why `load_dotenv()` had to run **before** this line — order matters here. If
-  you swapped these two lines, the client wouldn't find the key yet.
-- `client` is the object you'll use for every future request to Claude in this program.
-
-### `model = "claude-haiku-4-5-20251001"`
-
-This is just a plain Python string stored in a variable, naming **which** Claude model you want
-to talk to.
-
-- Anthropic offers several models (e.g., faster/cheaper "Haiku" models vs. more capable
-  "Sonnet"/"Opus" models). Each has a specific ID string like the one above.
-- Storing it in a variable (instead of typing the string every time) means if you want to
-  switch models later, you only change it in one place.
-
-### `message = client.messages.create(...)`
-
-This is the actual network request — the moment your program talks to Claude over the internet.
-
-- `client.messages.create(...)` sends an HTTP request to Anthropic's servers with everything
-  inside the parentheses, waits for Claude to generate a response, and returns that response as
-  a Python object.
-- That returned object is stored in the variable `message`.
-
-Let's look at each argument passed into `create(...)`:
-
-#### `model=model,`
-
-Tells the API which model (from the variable defined above) should generate the response.
-Different models have different capabilities, speeds, and costs.
-
-#### `max_tokens=1024,`
-
-A "token" is roughly a chunk of a word (for English text, ~4 characters or about ¾ of a word).
-This parameter caps **how long the model's reply is allowed to be** — at most 1024 tokens here.
-
-- This is a safety/cost control. Without a limit, a model could theoretically generate an
-  extremely long response. Setting `max_tokens` ensures the response — and what you're billed
-  for generating — stays bounded.
-- If the model's answer would naturally be longer than this limit, the response gets cut off.
-
-#### `messages=[ { "role": "user", "content": "What is the capital of France?" } ]`
-
-This is the actual conversation you're sending to the model.
-
-- The Claude API expects a **list of messages**, because conversations can have multiple turns
-  (you ask something, Claude replies, you ask a follow-up, and so on). Here, the list only has
-  one message, because this is a single-turn question.
-- Each message is a Python dictionary with two keys:
-  - `"role"`: who is "speaking" this message. It's `"user"` here because this message
-    represents something *you* (the human/application) are sending. The model's replies come
-    back with role `"assistant"`. (A conversation history you send back on a follow-up request
-    would include both `"user"` and `"assistant"` entries, alternating.)
-  - `"content"`: the actual text of the message — in this case, the question
-    `"What is the capital of France?"`.
-
-### `print(message)`
-
-Finally, this prints the entire `message` object that came back from Claude to your terminal.
-
-- This isn't just the answer text — it's the **raw response object** the SDK returns, which
-  includes metadata like:
-  - `id`: a unique identifier for this API call.
-  - `role`: will be `"assistant"` (the model's role).
-  - `content`: a list containing the actual reply text (e.g., "The capital of France is
-    Paris.").
-  - `model`: confirms which model actually handled the request.
-  - `stop_reason`: why the model stopped generating (e.g., it finished naturally, or hit
-    `max_tokens`).
-  - `usage`: how many tokens were used for your input and for the output — useful for
-    understanding cost.
-- Printing the *raw* object (instead of just the text) is intentional here — it's meant as a
-  learning exercise so you can see the full shape of what the API gives you, before you learn
-  to parse out just the parts you need (like `message.content[0].text`).
-
----
-
-## 3. Step-by-step: setting up and running the script
-
-### Prerequisites
+These steps only need to be done once — every level after this reuses the same environment.
 
 - **Python 3.9+** installed on your machine. Check with:
   ```
@@ -193,10 +60,11 @@ Finally, this prints the entire `message` object that came back from Claude to y
   under "API Keys" (requires an Anthropic account and billing set up). Keep this key private —
   never share it or commit it to a public repository.
 
-### Step 1 — Get the project and open a terminal
+### Step 1 — Open a terminal in the project folder
 
-Open a terminal in the project folder:
-`<YOUR_DIRECTORY_LOCATION>\ai-agent-step-by-step`
+```
+<YOUR_DIRECTORY_LOCATION>\ai-agent-step-by-step
+```
 
 ### Step 2 — Create and activate a virtual environment
 
@@ -208,13 +76,11 @@ python -m venv .venv
 .venv\Scripts\activate
 ```
 
-After activation, your terminal prompt should show `(.venv)` at the start of the line. This
-project already has a `.venv` folder set up, but this is the command that created it — useful
-if you ever need to recreate it elsewhere.
+After activation, your terminal prompt should show `(.venv)` at the start of the line.
 
 ### Step 3 — Install the required packages
 
-This script depends on two packages: `anthropic` (the SDK that talks to Claude) and
+Every level depends on the same two packages: `anthropic` (the SDK that talks to Claude) and
 `python-dotenv` (which loads your `.env` file). Install them with:
 
 ```powershell
@@ -223,8 +89,8 @@ pip install anthropic python-dotenv
 
 ### Step 4 — Create your `.env` file
 
-In the project root (same folder as `README.md`), create a file named exactly `.env` containing
-one line:
+In the project root (same folder as this `README.md`), create a file named exactly `.env`
+containing one line:
 
 ```
 ANTHROPIC_API_KEY=your-actual-api-key-here
@@ -234,27 +100,17 @@ Replace `your-actual-api-key-here` with the key you generated in the Anthropic C
 add quotes around the value, and don't commit this file to git (check `.gitignore` — it should
 already be excluded).
 
-### Step 5 — Run the script
+### Step 5 — Head to Level 01
 
-From the project root, run:
-
-```powershell
-python scripts/agent.py
-```
-
-### Step 6 — Read the output
-
-You should see a printed Python object in your terminal that looks roughly like:
-
-```
-Message(id='msg_...', content=[TextBlock(text='The capital of France is Paris.', type='text')], model='claude-haiku-4-5-20251001', role='assistant', stop_reason='end_turn', stop_sequence=None, type='message', usage=Usage(input_tokens=..., output_tokens=...))
-```
-
-If instead you see an error, check the troubleshooting section below.
+With your environment set up, jump into
+[Level 01: Build a Basic Agent](level-01_build_a_basic_agent/LEARN-AND-RUN.md) and work through
+the levels in order using the table above.
 
 ---
 
-## 4. Troubleshooting
+## 3. Troubleshooting
+
+These apply no matter which level's script you're running:
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
@@ -265,33 +121,11 @@ If instead you see an error, check the troubleshooting section below.
 
 ---
 
-## 5. Ideas to learn more (try these next)
+## 4. Where this is headed
 
-Once the script runs successfully, try modifying it yourself to deepen your understanding:
-
-1. **Print just the answer text**, not the whole object:
-   ```python
-   print(message.content[0].text)
-   ```
-2. **Change the question.** Edit the `"content"` string and re-run.
-3. **Add a system prompt** to steer the model's behavior/persona:
-   ```python
-   message = client.messages.create(
-       model=model,
-       max_tokens=1024,
-       system="You are a helpful assistant who always answers in one short sentence.",
-       messages=[{"role": "user", "content": "What is the capital of France?"}]
-   )
-   ```
-4. **Inspect `message.usage`** to see how many tokens your input and output cost — this is the
-   first step toward understanding API pricing.
-
-## 6. COMING UP NEXT
-1. **Deep-Dive into `max_tokens` and play with it** this is very basic yet important to understand for a fine grained control on the response generation. We will explore this under branch `level-02`
-2. **Make it a multi-turn conversation** by appending the assistant's reply and a new user
-   message to the `messages` list, then sending the whole list again. We will explore this under branch `level-03`
-3. **Turn it into a loop** using `input()` so you can type questions interactively instead of
-   hardcoding one. We will explore this under branch `level-04`
-
-Each of these steps builds naturally toward the next stage of "agent" behavior: conversation
-memory, tool use, and eventually autonomous multi-step agents.
+By the end of Level 04, you'll have a script that holds a real, growing conversation with
+Claude using nothing but a Python list and a couple of helper functions. That same pattern —
+*keep history, replay history* — is the foundation for everything more advanced that usually
+comes next: giving the agent tools it can call, letting it take multiple steps on its own, and
+eventually building fully autonomous agents. Future levels will build on this repo in exactly
+that direction.
