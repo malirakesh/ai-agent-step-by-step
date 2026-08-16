@@ -27,6 +27,7 @@ https://github.com/malirakesh/ai-agent-step-by-step/blob/15a1751381127d6d6148d57
 | [02](level-02_anatomy_of_claude_response/API_RESPONSE_ANATOMY.md) | Anatomy of a Claude Response | Stop treating the response as a black box. Learn every field on the `Message` object — `content`, `stop_reason`, `usage`, token counts — so you know exactly what you're working with. |
 | [03](level-03_claude_llm_model_api_is_stateless/LEVEL-03-README.md) | The Claude API Is Stateless | Discover the single most surprising thing about LLM APIs: Claude forgets everything between calls. See the "amnesia" bug happen live, then fix it by manually resending the conversation so far. |
 | [04](level-04_making_conversation_stateful/LEVEL-04-README.md) | Making the Conversation Stateful | Turn the Level 03 fix into a reusable pattern — a growing `messages` list plus small helper functions (`add_user_message`, `add_claude_assistant_message`, `chat`) that make multi-turn chat feel automatic. |
+| [05](level-05_make_a_simple_chatbot/LEVEL_05_CHATBOT_README.md) | Let's Make a Chatbot | Turn the Level 04 pattern into a real, interactive chatbot — swap the hardcoded prompts for `input()` inside a loop that keeps chatting until you type `X` to exit. |
 
 Each level's README includes a full code walkthrough, sample output, common mistakes to
 avoid, and hands-on exercises ("try this next") to deepen your understanding before moving
@@ -123,8 +124,9 @@ These apply no matter which level's script you're running:
 
 ## 4. Where this is headed
 
-By the end of Level 04, you'll have a script that holds a real, growing conversation with
-Claude using nothing but a Python list and a couple of helper functions. That same pattern —
+By the end of Level 05, you'll have a real, interactive chatbot — a script that holds a
+growing conversation with Claude using nothing but a Python list, a couple of helper
+functions, and a loop driven by your own typed input. That same pattern —
 *keep history, replay history* — is the foundation for everything more advanced that usually
 comes next: giving the agent tools it can call, letting it take multiple steps on its own, and
 eventually building fully autonomous agents. Future levels will build on this repo in exactly
